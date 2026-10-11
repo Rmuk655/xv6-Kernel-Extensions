@@ -22,11 +22,11 @@ All components build on the virtual memory subsystem from PA3, the MLFQ schedule
 
 ### Disk-backed Swap (`kernel/swap_disk.c`)
 
-The PA3 in-memory swap array (`swap_data[MAX_SWAP][PGSIZE]`) is replaced with a flat `slot_data[MAX_SWAP][PGSIZE]` array that represents the simulated disk surface. Each swap slot stores exactly one 4KB page. The array is 16MB (4096 slots × 4096 bytes), which fits within xv6's 128MB QEMU memory budget.
+The PA3 in-memory swap array (`swap_data[MAX_SWAP][PGSIZE]`) is replaced with four simulated disks, `simulated_disks[NDISKS][DISK_BLOCKS_PER_DISK][BSIZE]` (4 disks × 16384 blocks × 1 KB = 64 MB of kernel BSS). Each swap slot holds one 4KB page, stored as four 1 KB blocks whose placement depends on the active RAID mode.
 
-- `swap_out_page(page_data, slot)` — copies the evicted page into `slot_data[slot]` and submits four 1KB block requests to the disk scheduler for latency accounting.
-- `swap_in_page(page_data, slot)` — copies data back from `slot_data[slot]` into physical memory and submits read requests to the scheduler.
-- `swap_disk_free_slot(slot)` — zeroes `slot_data[slot]` when a swap slot is released, preventing stale data from being read back if a slot is reused before the former owner's PTE is fully cleaned up.
+- `swap_out_page(page_data, slot)` — writes the evicted page to the simulated disks as four 1 KB blocks (placed by the active RAID mode) and submits four block requests to the disk scheduler for latency accounting.
+- `swap_in_page(page_data, slot)` — reads the page's four blocks back from the simulated disks into physical memory and submits read requests to the scheduler.
+- `swap_disk_free_slot(slot)` — zeroes the slot's blocks on the simulated disks (including the parity block under RAID 5) when a swap slot is released, preventing stale data from being read back if a slot is reused before the former owner's PTE is fully cleaned up.
 
 The `swaptable[]` metadata array in `kalloc.c` tracks which RAID mode was active when each slot was written (`swaptable[i].raid_mode`), so swap-in always uses the correct RAID mapping regardless of what mode is currently active.
 
@@ -76,13 +76,13 @@ Parity is recomputed from scratch on every write by XOR-ing all three data disks
 
 ## Design Decisions and Assumptions
 
-**Flat storage instead of per-disk arrays.** The original design used `simulated_disks[NDISKS][DISK_BLOCKS_PER_DISK][BSIZE]`. For RAID 1 with `MAX_SWAP = 4096`, this required `DISK_BLOCKS_PER_DISK ≥ 240000`, giving 960MB of BSS — far exceeding the 128MB QEMU limit. The flat `slot_data[MAX_SWAP][PGSIZE]` array achieves the same correctness with 16MB. RAID mapping is still used for physical block number calculation (seek distance), so scheduling behaviour is meaningful.
+**Per-disk arrays.** Swap data lives in `simulated_disks[NDISKS][DISK_BLOCKS_PER_DISK][BSIZE]`: 4 disks × 16384 blocks × 1 KB = 64 MB. Data written under RAID 0, 1 or 5 is laid out on the individual disks (and RAID 5 parity is actually computed), and the same block numbers drive the seek-distance latency model.
 
-**`MAX_SWAP = 4096`.** The original value was 120000, which would require a 480MB storage array. 4096 slots is sufficient for all PA4 test programs (which use at most ~350 slots concurrently) and for the standard usertests workload.
+**`MAX_SWAP = 16384`.** 16384 slots × 4 KB = 64 MB of swap, equal to the usable capacity of the four simulated disks under RAID 0. The PA4 test programs use at most ~350 slots at once. Under RAID 1 and RAID 5 the physical block offsets limit usable slots (see the comment at the top of `kernel/swap_disk.c`).
 
 **Per-slot RAID mode tracking.** Since `raid_mode` is a global kernel variable, a swap-in that occurs after the mode has changed must use the mode that was active at the time of the swap-out. Each `swaptable[i].raid_mode` and `swap_slot_raid_mode[i]` record this. Without this, a process whose pages were evicted under RAID 0 would read garbage if RAID 5 became active before it faulted.
 
-**Zeroing slots on free.** `swap_disk_free_slot()` clears `slot_data[slot]` when a slot is released. Without this, a race between slot reuse and PTE cleanup could cause a newly-evicted page to be read back with a previous tenant's data.
+**Zeroing slots on free.** `swap_disk_free_slot()` clears the slot's blocks on the simulated disks when a slot is released. Without this, a race between slot reuse and PTE cleanup could cause a newly-evicted page to be read back with a previous tenant's data.
 
 **Sequential children in PA4_6.** The priority experiment forks two children that both do heavy I/O. Running them concurrently on a 3-CPU QEMU machine causes `clock_evict` on one CPU to evict pages owned by a process running on another CPU with no cross-process page table locking, producing random crashes (`scause=0x2`). The test was redesigned to run Child A and then Child B sequentially, which eliminates the race while still demonstrating that Child B reaches a higher MLFQ level than Child A.
 
@@ -197,11 +197,11 @@ All 6 combinations pass with zero data errors. `avg_latency ≥ ROTATIONAL_DELAY
 
 |             File           |                                                          Change                                                        |
 |----------------------------|------------------------------------------------------------------------------------------------------------------------|
-| `kernel/swap_disk.c`       | New file: disk scheduler, RAID mapping, flat slot storage                                                              |
+| `kernel/swap_disk.c`       | New file: disk scheduler, RAID mapping, per-disk block storage                                                              |
 | `kernel/swap_disk.h`       | New file: public interface declarations                                                                                |
 | `kernel/kalloc.c`          | Replaced `memmove` to `swap_data` with `swap_out_page`/`swap_in_page`; added `swap_disk_free_slot` call in `swap_free` |
 | `kernel/defs.h`            | Added declarations for `swap_disk.c` public functions                                                                  |
-| `kernel/memlayout.h`       | `MAX_SWAP` set to 4096                                                                                                 |
+| `kernel/memlayout.h`       | `MAX_SWAP` set to 16384                                                                                                 |
 | `kernel/main.c`            | Added `swap_disk_init()` call after `virtio_disk_init()`                                                               |
 | `kernel/sysproc.c`         | Implemented `sys_setdisksched`                                                                                         |
 | `kernel/syscall.c`         | Registered `sys_setdisksched` (already done in PA3 base)                                                               |
