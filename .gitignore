@@ -16,6 +16,3 @@ kernel/kernel
 user/usys.S
 .gdbinit
 TAGS
-
-# editor files
-.vscode/

@@ -58,7 +58,7 @@
 //   TRAMPOLINE (the same page as in the kernel)
 #define TRAPFRAME (TRAMPOLINE - PGSIZE)
 #define MAX_FRAMES 64
-#define MAX_SWAP 16384 // 16384 slots x 4 KB = 64 MB swap
+#define MAX_SWAP 16384 // 4 MB swap file
 
 #define CLINT        0x2000000L
 #define CLINT_MSIP(hart)  (CLINT + 4*(hart))   // software interrupt register per hart
