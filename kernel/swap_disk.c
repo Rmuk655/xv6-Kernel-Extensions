@@ -12,9 +12,12 @@
 #define MAX_DISK_REQS 128
 #define ROTATIONAL_DELAY 5
 #define NDISKS 4
-// RAID 0: max slot 3583 → max phys block = (3583*8+7)/4 = 7167  < 16384 OK
-// RAID 1: max slot 3583 → max phys block = (3583*8+7)%16384+2048 = 14335 < 16384 OK
-// RAID 5: max slot 3583 → max phys block = (3583*8+7)/3+4096 = 13653 < 16384 OK
+// Physical block bounds (BLOCKS_PER_PAGE = 4, so logical blocks run 0 .. MAX_SWAP*4-1):
+// RAID 0: max phys block = (MAX_SWAP*4-1)/4 = 16383 < 16384, valid for every slot.
+// RAID 1: phys block = logical % 16384 + 2048, which is >= 16384 for slots with (slot % 4096) >= 3584,
+//         so those slots would panic in phys_write.
+// RAID 5: phys block = logical / 3 + 4096, which is >= 16384 for slots >= 9216.
+// The PA4 tests use at most ~350 slots at once (lowest free slot is allocated first), so these limits are not reached.
 #define DISK_BLOCKS_PER_DISK 16384
 #define MAX_SWAP_SLOTS MAX_SWAP // matches MAX_SWAP in memlayout.h
 #define BLOCKS_PER_PAGE (PGSIZE / BSIZE)
