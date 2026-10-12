@@ -11,6 +11,13 @@ Four progressive extensions to the [xv6-riscv](https://github.com/mit-pdos/xv6-r
 
 The code is based on xv6-riscv and keeps its MIT license (see `LICENSE`). Each stage folder `Readme_A*` has the full design notes and test descriptions; this page is the summary.
 
+```mermaid
+flowchart LR
+  A1["1. Syscall counters<br/>per process"] --> A2["2. SC-MLFQ scheduler<br/>uses syscalls vs ticks"]
+  A2 --> A3["3. Clock page replacement<br/>evicts low-priority pages first"]
+  A3 --> A4["4. Disk-backed swap<br/>FCFS / SSTF + RAID 0/1/5"]
+```
+
 **Requirements:** a RISC-V GNU toolchain (`riscv64-linux-gnu-` or `riscv64-unknown-elf-`) and `qemu-system-riscv64`.
 
 ---
