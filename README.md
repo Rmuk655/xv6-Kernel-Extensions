@@ -1,8 +1,17 @@
 # xv6 Kernel Extensions
 
-Extended the xv6 operating system kernel across four progressive
-implementations covering system calls, scheduling, virtual memory
-management, and disk I/O subsystems — each building on the last.
+Four progressive extensions to the [xv6-riscv](https://github.com/mit-pdos/xv6-riscv) teaching kernel (MIT), built for the Operating Systems course at IIT Hyderabad. Each stage builds on the previous one:
+
+| Stage | Topic | Details |
+|---|---|---|
+| 1 | Custom system calls | [Readme_A1](Readme_A1/README.md) |
+| 2 | System-call-aware MLFQ scheduler | [Readme_A2](Readme_A2/README.md) |
+| 3 | Clock page replacement with swap | [Readme_A3](Readme_A3/README.md) |
+| 4 | Disk scheduling (FCFS/SSTF) and RAID 0/1/5-backed swap | [Readme_A4](Readme_A4/README.md) |
+
+The code is based on xv6-riscv and keeps its MIT license (see `LICENSE`). Each stage folder `Readme_A*` has the full design notes and test descriptions; this page is the summary.
+
+**Requirements:** a RISC-V GNU toolchain (`riscv64-linux-gnu-` or `riscv64-unknown-elf-`) and `qemu-system-riscv64`.
 
 ---
 
