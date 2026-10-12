@@ -1,6 +1,6 @@
 # xv6 Kernel Extensions
 
-Four progressive extensions to the [xv6-riscv](https://github.com/mit-pdos/xv6-riscv) teaching kernel (MIT), built for the Operating Systems course at IIT Hyderabad. Each stage builds on the previous one:
+Four progressive extensions to the [xv6-riscv](https://github.com/mit-pdos/xv6-riscv) teaching kernel (MIT), built for Operating Systems II (CS3523) at IIT Hyderabad. Each stage builds on the previous one:
 
 | Stage | Topic | Details |
 |---|---|---|
