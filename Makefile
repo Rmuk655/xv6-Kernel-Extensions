@@ -154,7 +154,9 @@ UPROGS=\
 	$U/_PA4_6\
 	$U/_PA4_7\
 	$U/_PA4_8\
-	$U/_PA4_run
+	$U/_PA4_run\
+	$U/_PA42\
+	$U/_PA43
 # 	$U/_PA_3_1\
 # 	$U/_PA_3_2\
 # 	$U/_PA_3_3\
@@ -193,8 +195,8 @@ UPROGS=\
 # 	$U/_PA2_2\
 # 	$U/_PA2_3\
 
-fs.img: mkfs/mkfs README $(UPROGS)
-	mkfs/mkfs fs.img README $(UPROGS)
+fs.img: mkfs/mkfs README.md $(UPROGS)
+	mkfs/mkfs fs.img README.md $(UPROGS)
 
 -include kernel/*.d user/*.d
 
