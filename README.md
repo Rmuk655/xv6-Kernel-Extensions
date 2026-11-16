@@ -222,3 +222,10 @@ PA4_1
 | `kernel/sysproc.c` | All system call implementations |
 | `kernel/types.h` | `struct mlfqinfo`, `struct vmstats` |
 | `kernel/vmstruct.h` | VM statistics structure |
+
+---
+
+## Limitations
+
+- The "disk" is a simulated `slot_data[4096][PGSIZE]` array in kernel memory (see `kernel/swap_disk.c`), so the RAID and scheduling results above are from the simulation, not real devices.
+- The disk request queue holds 128 requests; `disk_submit` panics when it is full (`kernel/swap_disk.c`).
