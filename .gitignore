@@ -19,3 +19,9 @@ TAGS
 
 # editor files
 .vscode/
+
+# Local tool and editor state
+.claude/
+.graphify/
+graphify-out/
+.tools/
